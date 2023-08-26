@@ -3,6 +3,12 @@ using UnityEngine;
 public class EnemyHealth : MonoBehaviour
 {
     public int health = 1;
+    private WaveManager waveManager;
+
+    private void Start()
+    {
+        waveManager = FindObjectOfType<WaveManager>();
+    }
 
     public void TakeDamage(int damage)
     {
@@ -16,6 +22,8 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
+        waveManager.EnemyDied();
+
         // Add any death effects or sounds here
         Destroy(gameObject);
     }
