@@ -22,12 +22,12 @@ public class PlayerAttack : MonoBehaviour
     {
         Vector2 shootingDirection = (Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position).normalized;
         Vector2 spawnPosition = (Vector2)transform.position + offset * shootingDirection.magnitude;
-        
+
         GameObject note = Instantiate(noteProjectilePrefab, spawnPosition, Quaternion.identity);
         Rigidbody2D rb = note.GetComponent<Rigidbody2D>();
         rb.velocity = shootingDirection * projectileSpeed;
         NoteProjectile noteProjectile = note.GetComponent<NoteProjectile>();
-        noteProjectile.damage = 1; 
+        noteProjectile.damage = 1;
     }
 
     void PlayMusicNote()
