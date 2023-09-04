@@ -169,18 +169,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 23d68ca8e8f4aa345b634b573d966bf2, type: 2}
   - {fileID: 11400000, guid: 28a048968826ab843953439df1763a6b, type: 2}
   - {fileID: 11400000, guid: be1df583ea82fa84288ec5a2cae34125, type: 2}
-  - {fileID: 11400000, guid: 5fe808a1b4f0b754cbebce473cad2053, type: 2}
-  - {fileID: 11400000, guid: b431628cc37de964eb70f3145bf1df35, type: 2}
-  - {fileID: 11400000, guid: aad56f6458f911a4393c616ea8512aa8, type: 2}
-  - {fileID: 11400000, guid: ddfd54e707a4fb641a37f06a474231da, type: 2}
-  - {fileID: 11400000, guid: a99a33f36ec443e40ad22c681fcd5fca, type: 2}
-  - {fileID: 11400000, guid: 8ce81e7f9810c89479efe63ea0f6ee17, type: 2}
   extraTiles: 25
   tileScale: {x: 8, y: 8, z: 1}
   player: {fileID: 875871103}
   generateDistance: 9
-  mapWidth: 500
-  mapHeight: 500
+  unloadDistance: 30
+  ruleTile: {fileID: 11400000, guid: 1753ad0b6a5404448b73e4f7d1a95801, type: 2}
+  ruleTileScale: {x: 8, y: 8, z: 1}
 --- !u!156049354 &874814712
 Grid:
   m_ObjectHideFlags: 0

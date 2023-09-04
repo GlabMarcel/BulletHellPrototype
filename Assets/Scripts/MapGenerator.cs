@@ -4,101 +4,132 @@ using UnityEngine.Tilemaps;
 public class MapGenerator : MonoBehaviour
 {
     public Tile[] tiles;
-    public int extraTiles = 6;
     public Vector3 tileScale = new Vector3(1.5f, 1.5f, 1);
+
     public GameObject player;
     public float generateDistance = 8f;
-    public float mapWidth = 50f;  // The width of the map
-    public float mapHeight = 50f; // The height of the map
+    public float unloadDistance = 12f;
+
+    public int extraTiles = 6;
+    private const float PathTileProbability = 0.2f;
 
     private Tilemap tilemap;
     private Vector3Int lastPlayerTile;
 
-    void Start()
+    private void Start()
     {
         tilemap = GetComponent<Tilemap>();
         GenerateFloor();
         lastPlayerTile = tilemap.WorldToCell(player.transform.position);
     }
 
-    void Update()
+    private void Update()
     {
         CheckForGeneration();
-
-        Vector3 position = player.transform.position;
-
-        // Check for horizontal wrapping
-        if (position.x > mapWidth / 2)
-        {
-            position.x = -mapWidth / 2;
-        }
-        else if (position.x < -mapWidth / 2)
-        {
-            position.x = mapWidth / 2;
-        }
-
-        // Check for vertical wrapping
-        if (position.y > mapHeight / 2)
-        {
-            position.y = -mapHeight / 2;
-        }
-        else if (position.y < -mapHeight / 2)
-        {
-            position.y = mapHeight / 2;
-        }
-
-        // Update player position
-        player.transform.position = position;
+        UnloadTiles();
     }
 
-    void CheckForGeneration()
+    private void CheckForGeneration()
     {
-        Vector3Int currentPlayerTile = tilemap.WorldToCell(player.transform.position);
-
-        // Check distance to the nearest edge
-        Vector3Int distanceToEdge = new Vector3Int(
-            Mathf.Abs(currentPlayerTile.x - lastPlayerTile.x),
-            Mathf.Abs(currentPlayerTile.y - lastPlayerTile.y),
-            0
-        );
-
-        if (distanceToEdge.x >= generateDistance || distanceToEdge.y >= generateDistance)
+        Vector3Int currentPlayerTile = GetCurrentPlayerTile();
+        if (IsGenerationNeeded(currentPlayerTile))
         {
             GenerateFloor();
             lastPlayerTile = currentPlayerTile;
         }
     }
 
-    void GenerateFloor()
+    private Vector3Int GetCurrentPlayerTile()
     {
-        Vector3Int playerTilePos = tilemap.WorldToCell(player.transform.position);
+        return tilemap.WorldToCell(player.transform.position);
+    }
 
-        // Calculate rows and columns based on camera view
-        int rows = Mathf.CeilToInt(Camera.main.orthographicSize * 2) + extraTiles * 2;
-        int cols = Mathf.CeilToInt(Camera.main.aspect * Camera.main.orthographicSize * 2) + extraTiles * 2;
+    private bool IsGenerationNeeded(Vector3Int currentPlayerTile)
+    {
+        return Vector3.Distance(currentPlayerTile, lastPlayerTile) >= generateDistance;
+    }
 
-        // Generate tiles around the player
+    private void UnloadTiles()
+    {
+        BoundsInt bounds = tilemap.cellBounds;
+        Vector3Int currentPlayerTile = GetCurrentPlayerTile();
+
+        foreach (var pos in bounds.allPositionsWithin)
+        {
+            if (Vector3.Distance(pos, currentPlayerTile) > unloadDistance)
+            {
+                tilemap.SetTile(pos, null);
+            }
+        }
+    }
+
+    private void GenerateFloor()
+    {
+        Vector3Int playerTilePos = GetCurrentPlayerTile();
+        int rows = CalculateRows();
+        int cols = CalculateCols();
+
         for (int i = -extraTiles; i < rows - extraTiles; i++)
         {
             for (int j = -extraTiles; j < cols - extraTiles; j++)
             {
                 Vector3Int tilePos = new Vector3Int(j + playerTilePos.x, i + playerTilePos.y, 0);
-
-                // Check if a tile is already set at this position
-                if (tilemap.GetTile(tilePos) == null)
-                {
-                    // Choose a random tile from the available tiles
-                    Tile randomTile = tiles[Random.Range(0, tiles.Length)];
-
-                    // Set the tile at the calculated position
-                    tilemap.SetTile(tilePos, randomTile);
-
-                    // Scale the tile GameObject
-                    tilemap.SetTransformMatrix(tilePos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, tileScale));
-                }
+                PlaceTile(tilePos, i, j);
             }
         }
     }
 
+    private int CalculateRows()
+    {
+        return Mathf.CeilToInt(Camera.main.orthographicSize * 2) + extraTiles * 2;
+    }
 
+    private int CalculateCols()
+    {
+        return Mathf.CeilToInt(Camera.main.aspect * Camera.main.orthographicSize * 2) + extraTiles * 2;
+    }
+
+    private void PlaceTile(Vector3Int tilePos, int i, int j)
+    {
+        if (tilemap.GetTile(tilePos) == null)
+        {
+            Tile tileToPlace = ChooseTile(tilePos, i, j);
+            tilemap.SetTile(tilePos, tileToPlace);
+            tilemap.SetTransformMatrix(tilePos, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, tileScale));
+        }
+    }
+
+    private Tile ChooseTile(Vector3Int tilePos, int i, int j)
+    {
+        bool hasPathNeighbor = HasPathNeighbor(tilePos);
+        float randomChance = Random.Range(0f, 1f);
+
+        if (i == 0 || j == 0 || (hasPathNeighbor && randomChance < PathTileProbability))
+        {
+            return tiles[0];
+        }
+        else
+        {
+            return tiles[Random.Range(1, tiles.Length)];
+        }
+    }
+
+    private bool HasPathNeighbor(Vector3Int tilePos)
+    {
+        Vector3Int[] neighbors = {
+            new Vector3Int(tilePos.x + 1, tilePos.y, tilePos.z),
+            new Vector3Int(tilePos.x - 1, tilePos.y, tilePos.z),
+            new Vector3Int(tilePos.x, tilePos.y + 1, tilePos.z),
+            new Vector3Int(tilePos.x, tilePos.y - 1, tilePos.z)
+        };
+
+        foreach (Vector3Int neighbor in neighbors)
+        {
+            if (tilemap.GetTile(neighbor) == tiles[0])
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
