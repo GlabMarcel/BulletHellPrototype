@@ -2,37 +2,30 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    public Transform target; // Reference to the player
-    public float smoothSpeed = 0.125f; // Speed of camera movement
-    public Vector3 offset; // Offset from the player
+    public Transform target;
+    //public float smoothSpeed = 0.125f;
+    public Vector3 offset;
+    public float zoomSpeed = 10f;
+    public float minZoom = 5f;
+    public float maxZoom = 15f;
 
-    public float minX, maxX, minY, maxY;
-
-    private float halfWidth;
-    private float halfHeight;
+    private Camera myCamera;
 
     private void Start()
     {
-        halfWidth = Camera.main.orthographicSize * Camera.main.aspect;
-        halfHeight = Camera.main.orthographicSize;
-
-        // Adjust the boundaries based on the camera's half-width and half-height
-        minX += halfWidth;
-        maxX -= halfWidth;
-        minY += halfHeight;
-        maxY -= halfHeight;
+        myCamera = GetComponent<Camera>();
     }
 
     private void LateUpdate()
     {
+        // Basic Camera Follow
         Vector3 desiredPosition = target.position + offset;
-        Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        // Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, smoothSpeed);
+        transform.position = desiredPosition;
 
-        // Clamp the camera's position to the adjusted boundaries
-        smoothedPosition.x = Mathf.Clamp(smoothedPosition.x, minX, maxX);
-        smoothedPosition.y = Mathf.Clamp(smoothedPosition.y, minY, maxY); // Adjust this line to allow vertical movement
-        smoothedPosition.z = transform.position.z; // Keep the camera's depth constant
-
-        transform.position = smoothedPosition;
+        // Dynamic Zoom (based on player's speed)
+        float scrollData = Input.GetAxis("Mouse ScrollWheel");
+        myCamera.orthographicSize -= scrollData * zoomSpeed;
+        myCamera.orthographicSize = Mathf.Clamp(myCamera.orthographicSize, minZoom, maxZoom);
     }
 }

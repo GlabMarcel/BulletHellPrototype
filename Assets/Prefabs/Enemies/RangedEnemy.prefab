@@ -162,6 +162,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 3.5
   stoppingDistance: 5
-  retreatDistance: 3
+  retreatDistance: 1
   startTimeBetweenShots: 2
   projectile: {fileID: 2809465442843173198, guid: 083f225799ab77a40a9044711c8c8d7d, type: 3}

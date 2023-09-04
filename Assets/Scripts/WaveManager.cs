@@ -2,25 +2,9 @@ using UnityEngine;
 
 public class WaveManager : MonoBehaviour
 {
-    [System.Serializable]
-    public class Wave
-    {
-        public WavePattern[] patterns;
-
-        [System.Serializable]
-        public class WavePattern
-        {
-            public GameObject enemyPrefab;
-            public int count;
-            public string patternType;
-        }
-    }
-
-    public Wave[] waves;
     public GameObject[] enemyPrefabs; // Array to hold different enemy prefabs
-
-    private int currentWaveIndex = 0;
-    private int enemiesAlive = 0;
+    private int currentWaveIndex = 0; // The current wave number
+    private int enemiesAlive = 0; // Number of enemies currently alive
 
     private int baseEnemies = 5; // Base number of enemies for the first wave
     private float enemyIncreaseFactor = 1.5f; // Factor by which enemies increase each wave
@@ -40,86 +24,52 @@ public class WaveManager : MonoBehaviour
 
     void StartNextWave()
     {
-        Debug.Log("Starting Wave: " + (currentWaveIndex + 1)); // Print the current wave number
-
+        Debug.Log("Starting Wave: " + (currentWaveIndex + 1));
         int totalEnemiesThisWave = Mathf.RoundToInt(baseEnemies * Mathf.Pow(enemyIncreaseFactor, currentWaveIndex));
-        GenerateRandomPatterns(totalEnemiesThisWave);
-
+        SpawnEnemies(totalEnemiesThisWave);
         currentWaveIndex++;
-
-        Debug.Log("Enemies Alive: " + enemiesAlive); // Print the number of enemies alive
     }
 
-    void GenerateRandomPatterns(int totalEnemies)
+    void SpawnEnemies(int totalEnemies)
     {
-        while (totalEnemies > 0)
+        Vector2 topRight = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
+        Vector2 bottomLeft = Camera.main.ScreenToWorldPoint(new Vector2(0, 0));
+
+        for (int i = 0; i < totalEnemies; i++)
         {
             // Randomly select an enemy prefab from the available prefabs
             GameObject randomEnemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
 
-            // Randomly select a pattern type
-            string[] patternTypes = { "Horizontal", "Vertical", "Diagonal", "Spiral", "Circle", "Cross" };
-            string randomPattern = patternTypes[Random.Range(0, patternTypes.Length)];
+            // Randomly select an edge (Top, Bottom, Left, Right)
+            int edge = Random.Range(0, 4);
 
-            // Randomly decide the number of enemies for this pattern (but not more than the remaining enemies)
-            int enemiesForThisPattern = Random.Range(1, totalEnemies + 1);
+            Vector3 spawnPosition = Vector3.zero;
 
-            SpawnPattern(enemiesForThisPattern, randomEnemyPrefab, randomPattern);
-
-            totalEnemies -= enemiesForThisPattern;
-        }
-    }
-
-
-    void SpawnPattern(int count, GameObject enemyPrefab, string pattern)
-    {
-        Vector2 spawnPosition = Vector2.zero;
-        float offset = 1.5f; // Distance from the camera's edge
-
-        for (int i = 0; i < count; i++)
-        {
-            switch (pattern)
+            switch (edge)
             {
-                case "Horizontal":
-                    spawnPosition = new Vector3(i - count / 2, GetSpawnOffset().y + offset, 0);
+                case 0: // Top
+                    spawnPosition = new Vector3(Random.Range(bottomLeft.x, topRight.x), topRight.y, 0);
                     break;
-                case "Vertical":
-                    spawnPosition = new Vector3(GetSpawnOffset().x + offset, i - count / 2, 0);
+                case 1: // Bottom
+                    spawnPosition = new Vector3(Random.Range(bottomLeft.x, topRight.x), bottomLeft.y, 0);
                     break;
-                case "Diagonal":
-                    spawnPosition = new Vector3(i - count / 2, i - count / 2, 0) + new Vector3(GetSpawnOffset().x, GetSpawnOffset().y, 0) + offset * Vector3.one;
+                case 2: // Left
+                    spawnPosition = new Vector3(bottomLeft.x, Random.Range(bottomLeft.y, topRight.y), 0);
                     break;
-                case "Spiral":
-                    float angle = i * 25 * Mathf.Deg2Rad; // 25 degrees between each enemy
-                    spawnPosition = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * i * 0.5f; // 0.5f determines the distance between each enemy in the spiral
+                case 3: // Right
+                    spawnPosition = new Vector3(topRight.x, Random.Range(bottomLeft.y, topRight.y), 0);
                     break;
-                case "Circle":
-                    float circleAngle = i * (360f / count) * Mathf.Deg2Rad;
-                    spawnPosition = new Vector3(Mathf.Cos(circleAngle), Mathf.Sin(circleAngle), 0) * 5f; // 5f is the radius of the circle
-                    break;
-                case "Cross":
-                    if (i < count / 2)
-                        spawnPosition = new Vector3(i - count / 4, 0, 0);
-                    else
-                        spawnPosition = new Vector3(0, i - 3 * count / 4, 0);
-                    break;
-                    // ... Add more patterns as needed
             }
 
-            Instantiate(enemyPrefab, spawnPosition + GetSpawnOffset(), Quaternion.identity);
+            Instantiate(randomEnemyPrefab, spawnPosition, Quaternion.identity);
             enemiesAlive++;
         }
     }
 
-    Vector2 GetSpawnOffset()
-    {
-        Vector2 topRight = Camera.main.ScreenToWorldPoint(new Vector2(Screen.width, Screen.height));
-        return topRight;
-    }
 
     public void EnemyDied()
     {
         enemiesAlive--;
-        Debug.Log("Enemies Alive: " + enemiesAlive); // Print the number of enemies alive
+        Debug.Log("Enemies Alive: " + enemiesAlive);
     }
 }
